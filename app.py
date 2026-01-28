@@ -11,20 +11,26 @@ import torchvision.transforms as transforms
 from model import CNN
 
 # =========================
+# PAGE CONFIG
+# =========================
+st.set_page_config(
+    page_title="🍎 Fruit Freshness Detector",
+    page_icon="🍏",
+    layout="centered"
+)
+
+# =========================
 # CONFIG
 # =========================
-IMG_SIZE = 224
-
 CLASS_NAMES = [
-    "freshapples",
-    "freshbanana",
-    "freshoranges",
-    "rottenapples",
-    "rottenbanana",
-    "rottenoranges"
+    "Fresh Apples 🍎",
+    "Fresh Bananas 🍌",
+    "Fresh Oranges 🍊",
+    "Rotten Apples 🤢",
+    "Rotten Bananas 🤮",
+    "Rotten Oranges 🤧"
 ]
 
-# نفس preprocessing حق الاختبار (بدون augmentation)
 transform = transforms.Compose([
     transforms.Resize(255),
     transforms.CenterCrop(224),
@@ -50,37 +56,90 @@ def load_model():
 def predict(image, model):
     x = transform(image).unsqueeze(0)
     with torch.no_grad():
-        logits = model(x)
-        probs = F.softmax(logits, dim=1).numpy()[0]
+        probs = F.softmax(model(x), dim=1)[0].numpy()
     return probs
 
 # =========================
-# STREAMLIT UI
+# HEADER
 # =========================
-st.set_page_config(page_title="🍎 Fresh vs Rotten Fruits", layout="centered")
+st.markdown(
+    """
+    <h1 style='text-align: center;'>🍎 Fruit Freshness Detector</h1>
+    <p style='text-align: center; color: gray;'>
+    AI-powered CNN model to detect fresh vs rotten fruits
+    </p>
+    """,
+    unsafe_allow_html=True
+)
 
-st.title("🍎 Fresh vs Rotten Fruit Detection")
-st.caption("CNN-based image classification demo")
+st.divider()
 
+# =========================
+# APP BODY
+# =========================
 model = load_model()
 
 uploaded = st.file_uploader(
-    "Upload a fruit image",
+    "📤 Upload a fruit image",
     type=["jpg", "png", "jpeg"]
 )
 
 if uploaded:
     image = Image.open(io.BytesIO(uploaded.read())).convert("RGB")
-    st.image(image, caption="Uploaded Image", use_container_width=True)
 
-    probs = predict(image, model)
-    pred = int(np.argmax(probs))
+    st.image(
+        image,
+        caption="📸 Uploaded Image",
+        use_container_width=True
+    )
 
-    st.subheader("Prediction")
-    st.write(f"**{CLASS_NAMES[pred]}**")
-    st.write(f"Confidence: **{probs[pred]*100:.2f}%**")
+    with st.spinner("🔍 Analyzing image..."):
+        probs = predict(image, model)
+        pred = int(np.argmax(probs))
+        confidence = probs[pred]
 
-    st.subheader("Class Probabilities")
-    for name, p in zip(CLASS_NAMES, probs):
-        st.write(f"{name}: {p*100:.2f}%")
+    st.success("✅ Prediction Complete")
+
+    # =========================
+    # RESULT CARD
+    # =========================
+    st.markdown(
+        f"""
+        <div style="
+            background-color:#f9f9f9;
+            padding:20px;
+            border-radius:15px;
+            text-align:center;
+            box-shadow:0px 4px 10px rgba(0,0,0,0.1);
+        ">
+            <h2>{CLASS_NAMES[pred]}</h2>
+            <p style="font-size:18px;">
+                Confidence: <b>{confidence*100:.2f}%</b>
+            </p>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    # =========================
+    # CONFIDENCE BAR
+    # =========================
+    st.markdown("### 🔵 Confidence Level")
+    st.progress(float(confidence))
+
+else:
+    st.info("⬆️ Please upload a fruit image to get started.")
+
+st.divider()
+
+# =========================
+# FOOTER
+# =========================
+st.markdown(
+    "<p style='text-align:center; color:gray;'>"
+    "Built with ❤️ using PyTorch & Streamlit"
+    "</p>",
+    unsafe_allow_html=True
+)
+
 
