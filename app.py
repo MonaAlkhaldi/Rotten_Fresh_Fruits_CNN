@@ -145,7 +145,7 @@ st.markdown(
 # =========================
 st.markdown(
     "<p style='text-align:center; color:gray;'>"
-    "Built with ❤️ using PyTorch & Streamlit"
+    "Built with ❤️ by Mona , Hana , Raneem"
     "</p>",
     unsafe_allow_html=True
 )
