@@ -13,20 +13,24 @@ from model import CNN
 # =========================
 # CONFIG
 # =========================
-IMG_SIZE = 256
+IMG_SIZE = 224
 
 CLASS_NAMES = [
-    "Brain Tumor",
-    "Healthy"
+    "freshapples",
+    "freshbanana",
+    "freshoranges",
+    "rottenapples",
+    "rottenbanana",
+    "rottenoranges"
 ]
 
-IMAGENET_MEAN = [0.485, 0.456, 0.406]
-IMAGENET_STD  = [0.229, 0.224, 0.225]
-
+# نفس preprocessing حق الاختبار (بدون augmentation)
 transform = transforms.Compose([
-    transforms.Resize((IMG_SIZE, IMG_SIZE)),
+    transforms.Resize(255),
+    transforms.CenterCrop(224),
     transforms.ToTensor(),
-    transforms.Normalize(IMAGENET_MEAN, IMAGENET_STD),
+    transforms.Normalize([0.5, 0.5, 0.5],
+                         [0.5, 0.5, 0.5])
 ])
 
 # =========================
@@ -34,20 +38,14 @@ transform = transforms.Compose([
 # =========================
 @st.cache_resource
 def load_model():
-    model = CNN_TUMOR(
-        img_size=IMG_SIZE,
-        num_classes=len(CLASS_NAMES)
-    )
-    state = torch.load(
-        "weights/Brain_Tumor_best_state_dict.pt",
-        map_location="cpu"
-    )
+    model = CNN()
+    state = torch.load("best_model.pth", map_location="cpu")
     model.load_state_dict(state)
     model.eval()
     return model
 
 # =========================
-# PREDICTION
+# PREDICT
 # =========================
 def predict(image, model):
     x = transform(image).unsqueeze(0)
@@ -59,37 +57,30 @@ def predict(image, model):
 # =========================
 # STREAMLIT UI
 # =========================
-st.set_page_config(
-    page_title="🧠 Brain Tumor Detection",
-    layout="centered"
-)
+st.set_page_config(page_title="🍎 Fresh vs Rotten Fruits", layout="centered")
 
-st.title("🧠 Brain Tumor Detection")
-st.caption("Educational demo only – not for medical diagnosis.")
+st.title("🍎 Fresh vs Rotten Fruit Detection")
+st.caption("CNN-based image classification demo")
 
 model = load_model()
 
 uploaded = st.file_uploader(
-    "Upload MRI Image",
+    "Upload a fruit image",
     type=["jpg", "png", "jpeg"]
 )
 
 if uploaded:
     image = Image.open(io.BytesIO(uploaded.read())).convert("RGB")
-    st.image(
-        image,
-        caption="Uploaded image",
-        use_container_width=True
-    )
+    st.image(image, caption="Uploaded Image", use_container_width=True)
 
     probs = predict(image, model)
-    pred = np.argmax(probs)
+    pred = int(np.argmax(probs))
 
     st.subheader("Prediction")
     st.write(f"**{CLASS_NAMES[pred]}**")
-    st.write(f"Confidence: **{probs[pred] * 100:.2f}%**")
+    st.write(f"Confidence: **{probs[pred]*100:.2f}%**")
 
     st.subheader("Class Probabilities")
     for name, p in zip(CLASS_NAMES, probs):
-        st.write(f"{name}: {p * 100:.2f}%")
+        st.write(f"{name}: {p*100:.2f}%")
 
