@@ -8,7 +8,7 @@ import torch
 import torch.nn.functional as F
 import torchvision.transforms as transforms
 
-from model import CNN_TUMOR
+from model import CNN
 
 # =========================
 # CONFIG
