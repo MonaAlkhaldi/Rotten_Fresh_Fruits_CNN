@@ -11,10 +11,10 @@ import torchvision.transforms as transforms
 from model import CNN
 
 # =========================
-# PAGE CONFIG
+# PAGE SETUP
 # =========================
 st.set_page_config(
-    page_title="🍎 Fruit Freshness Detector",
+    page_title="🍎 Fruit Freshness AI",
     page_icon="🍏",
     layout="centered"
 )
@@ -23,12 +23,12 @@ st.set_page_config(
 # CONFIG
 # =========================
 CLASS_NAMES = [
-    "Fresh Apples 🍎",
-    "Fresh Bananas 🍌",
-    "Fresh Oranges 🍊",
-    "Rotten Apples 🤢",
-    "Rotten Bananas 🤮",
-    "Rotten Oranges 🤧"
+    "fresh apples 🍎",
+    "fresh bananas 🍌",
+    "fresh oranges 🍊",
+    "rotten apples 🤢",
+    "rotten bananas 🤮",
+    "rotten oranges 🤧"
 ]
 
 transform = transforms.Compose([
@@ -64,9 +64,9 @@ def predict(image, model):
 # =========================
 st.markdown(
     """
-    <h1 style='text-align: center;'>🍎 Fruit Freshness Detector</h1>
-    <p style='text-align: center; color: gray;'>
-    AI-powered CNN model to detect fresh vs rotten fruits
+    <h1 style="text-align:center;">🍎 Fruit Freshness AI</h1>
+    <p style="text-align:center; color:gray;">
+    Upload a fruit image and let the AI judge its freshness 🍏🤖
     </p>
     """,
     unsafe_allow_html=True
@@ -86,51 +86,59 @@ uploaded = st.file_uploader(
 
 if uploaded:
     image = Image.open(io.BytesIO(uploaded.read())).convert("RGB")
+    st.image(image, caption="📸 Your fruit", use_container_width=True)
 
-    st.image(
-        image,
-        caption="📸 Uploaded Image",
-        use_container_width=True
-    )
-
-    with st.spinner("🔍 Analyzing image..."):
+    with st.spinner("🧠 Thinking like a fruit expert..."):
         probs = predict(image, model)
         pred = int(np.argmax(probs))
-        confidence = probs[pred]
+        confidence = probs[pred] * 100
 
-    st.success("✅ Prediction Complete")
+    st.divider()
 
     # =========================
-    # RESULT CARD
+    # TEXT-ONLY PREDICTION (BUT FUN 😄)
     # =========================
+    if confidence > 85:
+        tone = "The model is very confident"
+    elif confidence > 65:
+        tone = "The model is fairly confident"
+    else:
+        tone = "The model is unsure, but thinks"
+
     st.markdown(
         f"""
-        <div style="
-            background-color:#f9f9f9;
-            padding:20px;
-            border-radius:15px;
-            text-align:center;
-            box-shadow:0px 4px 10px rgba(0,0,0,0.1);
-        ">
-            <h2>{CLASS_NAMES[pred]}</h2>
-            <p style="font-size:18px;">
-                Confidence: <b>{confidence*100:.2f}%</b>
-            </p>
-        </div>
+        <h3 style="text-align:center;">
+        🧾 Prediction Result
+        </h3>
+
+        <p style="font-size:18px; text-align:center;">
+        {tone} that this image shows <b>{CLASS_NAMES[pred]}</b>.
+        </p>
+
+        <p style="text-align:center; color:gray;">
+        Confidence level: {confidence:.2f}%
+        </p>
         """,
         unsafe_allow_html=True
     )
 
-    # =========================
-    # CONFIDENCE BAR
-    # =========================
-    st.markdown("### 🔵 Confidence Level")
-    st.progress(float(confidence))
-
 else:
-    st.info("⬆️ Please upload a fruit image to get started.")
+    st.info("⬆️ Upload a fruit image to see the AI prediction.")
 
 st.divider()
+
+# =========================
+# FOOTER
+# =========================
+st.markdown(
+    """
+    <p style="text-align:center; color:gray; font-size:14px;">
+    🍏 Built with PyTorch & Streamlit • Educational project
+    </p>
+    """,
+    unsafe_allow_html=True
+)
+
 
 # =========================
 # FOOTER
