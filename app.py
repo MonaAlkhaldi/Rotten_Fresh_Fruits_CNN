@@ -58,4 +58,3 @@ def get_model_info(model: torch.nn.Module) -> dict:
         "trainable_parameters": trainable_params,
         "model_type": model.__class__.__name__
     }
-
